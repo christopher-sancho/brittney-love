@@ -1,5 +1,4 @@
 import { put, list, del } from '@vercel/blob';
-import { NextResponse } from 'next/server';
 
 const MAX_MESSAGES_PER_FILE = 10;
 const MESSAGE_FILE_PREFIX = 'birthday-messages-';
@@ -53,7 +52,7 @@ async function getAllMessages() {
 export async function GET(request) {
   try {
     const messages = await getAllMessages();
-    return new NextResponse(JSON.stringify(messages), {
+    return new Response(JSON.stringify(messages), {
       status: 200,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
@@ -63,7 +62,13 @@ export async function GET(request) {
       }
     });
   } catch (error) {
-    return new NextResponse(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
   }
 }
 
@@ -84,10 +89,13 @@ export async function POST(request) {
       // Continue with empty messages array if file doesn't exist
     }
 
-    messages.push({
+    // Add id and timestamp to the message
+    const newMessage = {
       ...messageData,
+      id: Date.now() + Math.random(),
       timestamp: new Date().toISOString()
-    });
+    };
+    messages.push(newMessage);
 
     const { url } = await put(currentFile, JSON.stringify(messages), {
       access: 'public',
@@ -97,7 +105,7 @@ export async function POST(request) {
       allowOverwrite: true
     });
 
-    return new NextResponse(JSON.stringify({ success: true, url }), {
+    return new Response(JSON.stringify({ success: true, message: newMessage }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
@@ -107,15 +115,18 @@ export async function POST(request) {
       }
     });
   } catch (error) {
-    return new NextResponse(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
   }
 }
 
 export async function OPTIONS(request) {
-  return new NextResponse(null, {
+  return new Response(null, {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
