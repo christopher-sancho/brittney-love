@@ -181,7 +181,11 @@ function App() {
       addChatMessage("Yes, I'd love to share a picture! 📸", true, 0)
       addChatMessage("Amazing! Please select your favorite picture of Brittney below 💕", false, 1000)
       setTimeout(() => {
-        fileInputRef.current?.click()
+        // Better mobile file input triggering
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '' // Reset input
+          fileInputRef.current.click()
+        }
       }, 2000)
     } else {
       addChatMessage("No pictures this time 😊", true, 0)
@@ -218,14 +222,10 @@ function App() {
               timestamp: new Date().toISOString()
             }
             
-            console.log('Saving image message:', imageMessage); // Debug
-            console.log('Base64 data length:', base64Data?.length); // Debug
-            
             await saveMessageWithImage(imageMessage, base64Data)
             
             // Refresh messages from Vercel to get the new image
             const updatedMessages = await getAllMessages()
-            console.log('Updated messages after image upload:', updatedMessages); // Debug
             setMessages(updatedMessages)
             
             addChatMessage("Perfect! Your picture has been added! 📸✨", false, 2000)
@@ -318,24 +318,20 @@ function App() {
               </div>
             ) : (
               <div className="messages-list">
-                {messages.map((msg) => {
-                  console.log('Message data:', msg); // Debug log
-                  return (
-                    <div key={msg.id} className="birthday-message">
-                      <div className="message-author">From: {msg.name} 💕</div>
-                      <div className="message-content">{msg.message}</div>
-                      {msg.image && (
-                        <div className="message-image">
-                          <img src={msg.image} alt="Shared memory" />
-                        </div>
-                      )}
-                      {msg.image && <div style={{fontSize: '12px', color: '#666'}}>📸 Image attached</div>}
-                      <div className="message-time">
-                        {new Date(msg.timestamp).toLocaleDateString()}
+                {messages.map((msg) => (
+                  <div key={msg.id} className="birthday-message">
+                    <div className="message-author">From: {msg.name} 💕</div>
+                    <div className="message-content">{msg.message}</div>
+                    {msg.image && (
+                      <div className="message-image">
+                        <img src={msg.image} alt="Shared memory" />
                       </div>
+                    )}
+                    <div className="message-time">
+                      {new Date(msg.timestamp).toLocaleDateString()}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             )}
             <button 
@@ -364,7 +360,8 @@ function App() {
         type="file"
         ref={fileInputRef}
         onChange={handleImageSelect}
-        accept="image/*"
+        accept="image/*,image/heic,image/heif"
+        capture="environment"
         style={{ display: 'none' }}
       />
 
@@ -455,6 +452,18 @@ function App() {
               >
                 No pictures this time 😊
               </button>
+              {/* Fallback direct file input for mobile */}
+              <label htmlFor="mobile-file-input" className="mobile-file-label">
+                📷 Or tap here to select photo
+              </label>
+              <input
+                id="mobile-file-input"
+                type="file"
+                onChange={handleImageSelect}
+                accept="image/*,image/heic,image/heif"
+                capture="environment"
+                style={{ display: 'none' }}
+              />
             </div>
           )}
         </div>

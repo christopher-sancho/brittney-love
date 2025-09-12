@@ -320,6 +320,28 @@
   border-color: rgba(255, 107, 157, 0.5);
 }
 
+/* Mobile file input label */
+.mobile-file-label {
+  display: block;
+  background: rgba(118, 118, 128, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.mobile-file-label:hover {
+  background: rgba(118, 118, 128, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* Input Form */
 .input-form {
   width: 100%;

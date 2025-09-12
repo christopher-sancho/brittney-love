@@ -34,7 +34,6 @@ export default async function handler(req, res) {
         const response = await fetch(blobs[0].url)
         const messages = await response.json()
         
-        console.log('Retrieved messages from blob:', messages) // Debug log
         return res.status(200).json(messages || [])
       } catch (error) {
         console.log('No existing messages found, returning empty array')
@@ -69,8 +68,6 @@ export default async function handler(req, res) {
       }
 
       existingMessages.push(messageWithId)
-
-      console.log('Saving messages to blob:', existingMessages) // Debug log
 
       // Save updated messages back to Vercel Blob
       const blob = await put(MESSAGES_BLOB_NAME, JSON.stringify(existingMessages), {
