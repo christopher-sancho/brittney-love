@@ -1,7 +1,5 @@
 // Simple service for Vercel Blob storage
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? 'https://your-app-name.vercel.app/api' 
-  : '/api'
+const API_BASE = '/api' // Always use relative URLs so it works on any domain
 
 /**
  * Save a message using Vercel API
