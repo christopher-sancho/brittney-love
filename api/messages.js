@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         return res.status(200).json([])
       }
     }
- i
+
     if (req.method === 'POST') {
       // Add new message
       const newMessage = req.body
