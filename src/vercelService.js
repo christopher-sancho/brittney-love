@@ -1,5 +1,5 @@
 // Simple service for Vercel Blob storage
-const API_BASE = '/api' // Always use relative URLs so it works on any domain
+const API_BASE = "/api"; // Always use relative URLs so it works on any domain
 
 /**
  * Save a message using Vercel API
@@ -7,47 +7,47 @@ const API_BASE = '/api' // Always use relative URLs so it works on any domain
  * @returns {Promise} - Promise that resolves when message is saved
  */
 export const saveMessage = async (message) => {
-  try {
-    const response = await fetch(`${API_BASE}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message)
-    })
+    try {
+        const response = await fetch(`${API_BASE}/messages`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(message),
+        });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Message saved successfully:", result);
+        return result;
+    } catch (error) {
+        console.error("Error saving message:", error);
+        throw error;
     }
-
-    const result = await response.json()
-    console.log('Message saved successfully:', result)
-    return result
-  } catch (error) {
-    console.error('Error saving message:', error)
-    throw error
-  }
-}
+};
 
 /**
  * Get all messages from Vercel API
  * @returns {Promise<Array>} - Promise that resolves to array of messages
  */
 export const getAllMessages = async () => {
-  try {
-    const response = await fetch(`${API_BASE}/messages`)
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
+    try {
+        const response = await fetch(`${API_BASE}/messages`);
 
-    const messages = await response.json()
-    return messages || []
-  } catch (error) {
-    console.error('Error fetching messages:', error)
-    throw error
-  }
-}
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const messages = await response.json();
+        return messages || [];
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        throw error;
+    }
+};
 
 /**
  * Upload an image to Vercel Blob
@@ -56,29 +56,29 @@ export const getAllMessages = async () => {
  * @returns {Promise<string>} - Promise that resolves to the image URL
  */
 export const uploadImage = async (base64Data, fileName = null) => {
-  try {
-    const response = await fetch(`${API_BASE}/upload-image`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        imageData: base64Data,
-        fileName: fileName
-      })
-    })
+    try {
+        const response = await fetch(`${API_BASE}/upload-image`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                imageData: base64Data,
+                fileName: fileName,
+            }),
+        });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.imageUrl;
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        throw error;
     }
-
-    const result = await response.json()
-    return result.imageUrl
-  } catch (error) {
-    console.error('Error uploading image:', error)
-    throw error
-  }
-}
+};
 
 /**
  * Save a message with an image
@@ -87,20 +87,17 @@ export const uploadImage = async (base64Data, fileName = null) => {
  * @returns {Promise} - Promise that resolves when both are saved
  */
 export const saveMessageWithImage = async (messageData, base64ImageData) => {
-  try {
-    // First upload the image
-    const imageUrl = await uploadImage(base64ImageData)
-    
-    // Then save the message with the image URL
-    const messageWithImage = {
-      ...messageData,
-      image: imageUrl,
-      hasImage: true
+    try {
+        // Save the message with base64 image directly (simpler approach)
+        const messageWithImage = {
+            ...messageData,
+            image: base64ImageData,
+            hasImage: true,
+        };
+
+        return await saveMessage(messageWithImage);
+    } catch (error) {
+        console.error("Error saving message with image:", error);
+        throw error;
     }
-    
-    return await saveMessage(messageWithImage)
-  } catch (error) {
-    console.error('Error saving message with image:', error)
-    throw error
-  }
-}
+};

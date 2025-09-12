@@ -199,7 +199,7 @@ function App() {
               id: Date.now(),
               name: userName,
               message: "Shared a favorite picture! 📸💕",
-              image: base64Data,
+              image: base64Data, // This variable is available in this scope
               timestamp: new Date().toISOString()
             }
             
