@@ -361,7 +361,6 @@ function App() {
         ref={fileInputRef}
         onChange={handleImageSelect}
         accept="image/*,image/heic,image/heif"
-        capture="environment"
         style={{ display: 'none' }}
       />
 
@@ -454,14 +453,13 @@ function App() {
               </button>
               {/* Fallback direct file input for mobile */}
               <label htmlFor="mobile-file-input" className="mobile-file-label">
-                📷 Or tap here to select photo
+                📷 Choose from Photos/Camera
               </label>
               <input
                 id="mobile-file-input"
                 type="file"
                 onChange={handleImageSelect}
                 accept="image/*,image/heic,image/heif"
-                capture="environment"
                 style={{ display: 'none' }}
               />
             </div>
