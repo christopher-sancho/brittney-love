@@ -40,7 +40,7 @@ const compressImage = (file, quality = 0.6) => {
 }
 
 function App() {
-  const [step, setStep] = useState('welcome') // welcome, name-check, collect-message, ask-another, ask-picture, view-messages
+  const [step, setStep] = useState('welcome') // welcome, name-check, collect-message, ask-another, ask-picture, ask-more-content, view-messages
   const [userName, setUserName] = useState('')
   const [currentMessage, setCurrentMessage] = useState('')
   const [selectedImage, setSelectedImage] = useState(null)
@@ -113,7 +113,7 @@ function App() {
     if (userName.trim()) {
       addChatMessage(userName, true, 0)
       addChatMessage(`Nice to meet you, ${userName}! 😊`, false, 1000)
-      addChatMessage("Would you like to leave a fun/loving message or share your favorite memory of Brittney?", false, 2500)
+      addChatMessage("Please share a loving message, favorite memory, or something special about Brittney! 💕", false, 2500)
       setTimeout(() => setStep('collect-message'), 3500)
     }
   }
@@ -141,12 +141,12 @@ function App() {
         
         addChatMessage(currentMessage, true, 0)
         addChatMessage("Thank you so much! ❤️ Your message has been saved for Brittney's birthday! 🎉", false, 1000)
-        addChatMessage("Want to add another sweet message? Share a favorite memory, inside joke, or something that makes you smile about Brittney! 💕", false, 2500)
+        addChatMessage("Would you like to upload a photo or write another message? 😊", false, 2500)
         
         // Reset form
         setCurrentMessage('')
         setSelectedImage(null)
-        setTimeout(() => setStep('ask-another'), 3500)
+        setTimeout(() => setStep('ask-more-content'), 3500)
         
       } catch (error) {
         console.error('Failed to save message:', error)
@@ -173,6 +173,25 @@ function App() {
       addChatMessage("No, that's all for now 😊", true, 0)
       addChatMessage("Perfect! Would you like to share a favorite picture of Brittney? 📸✨", false, 1000)
       setTimeout(() => setStep('ask-picture'), 2500)
+    }
+  }
+
+  const handleMoreContent = (choice) => {
+    if (choice === 'photo') {
+      addChatMessage("📸 Upload another photo", true, 0)
+      addChatMessage("Great! Please select another picture of Brittney 📷💕", false, 1000)
+      setTimeout(() => setStep('ask-picture'), 2000)
+    } else if (choice === 'message') {
+      addChatMessage("📝 Write a message", true, 0)
+      addChatMessage("Perfect! Share a loving message, favorite memory, or something special about Brittney! 💕", false, 1000)
+      setTimeout(() => setStep('collect-message'), 2000)
+    } else {
+      addChatMessage("All done! 😊", true, 0)
+      addChatMessage("Thank you so much for sharing! Brittney is going to love everything! 🎉💕", false, 1000)
+      setTimeout(() => {
+        setStep('welcome')
+        setUserName('')
+      }, 3000)
     }
   }
 
@@ -230,12 +249,9 @@ function App() {
             
             addChatMessage("Perfect! Your picture has been added! 📸✨", false, 2000)
             addChatMessage("Thank you for sharing such a beautiful memory! 💕", false, 3500)
-            addChatMessage("Brittney is going to love this! 🥰", false, 5000)
+            addChatMessage("Would you like to upload another photo or write a message? 😊", false, 5000)
             
-            setTimeout(() => {
-              setStep('welcome')
-              setUserName('')
-            }, 6500)
+            setTimeout(() => setStep('ask-more-content'), 6000)
             
           } catch (error) {
             console.error('Failed to upload image to Vercel:', error)
@@ -433,6 +449,29 @@ function App() {
                 onClick={() => handleAnotherMemory(false)}
               >
                 No, that's all for now 😊
+              </button>
+            </div>
+          )}
+
+          {step === 'ask-more-content' && (
+            <div className="response-buttons">
+              <button 
+                className="response-btn yes"
+                onClick={() => handleMoreContent('photo')}
+              >
+                📸 Upload Another Photo
+              </button>
+              <button 
+                className="response-btn"
+                onClick={() => handleMoreContent('message')}
+              >
+                📝 Write a Message
+              </button>
+              <button 
+                className="response-btn no"
+                onClick={() => handleMoreContent('done')}
+              >
+                ✨ All Done!
               </button>
             </div>
           )}
