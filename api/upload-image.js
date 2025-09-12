@@ -36,7 +36,8 @@ export default async function handler(req, res) {
     const blob = await put(uniqueFileName, buffer, {
       access: 'public',
       contentType: imageData.match(/^data:([^;]+);/)?.[1] || 'image/jpeg',
-      token: BLOB_READ_WRITE_TOKEN
+      token: BLOB_READ_WRITE_TOKEN,
+      allowOverwrite: true  // Allow overwriting if same filename somehow generated
     })
 
     return res.status(200).json({ 

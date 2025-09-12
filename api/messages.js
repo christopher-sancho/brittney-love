@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         return res.status(200).json([])
       }
     }
-
+ i
     if (req.method === 'POST') {
       // Add new message
       const newMessage = req.body
@@ -73,7 +73,8 @@ export default async function handler(req, res) {
       const blob = await put(MESSAGES_BLOB_NAME, JSON.stringify(existingMessages), {
         access: 'public',
         contentType: 'application/json',
-        token: BLOB_READ_WRITE_TOKEN
+        token: BLOB_READ_WRITE_TOKEN,
+        allowOverwrite: true  // Allow updating the existing messages file
       })
 
       return res.status(200).json({ 
@@ -83,9 +84,15 @@ export default async function handler(req, res) {
       })
     }
 
-    res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' })
   } catch (error) {
     console.error('API Error:', error)
-    res.status(500).json({ error: 'Internal server error', details: error.message })
+    console.error('Error stack:', error.stack)
+    console.error('BLOB_READ_WRITE_TOKEN present:', !!BLOB_READ_WRITE_TOKEN)
+    return res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      hasToken: !!BLOB_READ_WRITE_TOKEN
+    })
   }
 }
