@@ -128,6 +128,12 @@ function App() {
       }
       
       try {
+        // Show debug info in chat for mobile debugging
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        if (isMobile) {
+          addChatMessage(`Debug: Saving from "${newMessage.name}" - "${newMessage.message.substring(0, 20)}..." (${newMessage.message.length} chars)`, false, 500)
+        }
+        
         // Save to Vercel
         const result = await saveMessage(newMessage)
         
@@ -151,7 +157,8 @@ function App() {
       } catch (error) {
         console.error('Failed to save message:', error)
         addChatMessage(currentMessage, true, 0)
-        addChatMessage("Oops! There was an issue saving your message. But don't worry, it's saved locally! 💕", false, 1000)
+        addChatMessage(`Debug: Error saving "${currentMessage.substring(0, 20)}..." - ${error.message}`, false, 1000)
+        addChatMessage("Your message is saved locally though! 💕", false, 3000)
         
         // Fallback to localStorage only
         const messageWithId = { ...newMessage, id: Date.now() }

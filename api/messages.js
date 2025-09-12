@@ -46,6 +46,8 @@ export default async function handler(req, res) {
       // Add new message
       const newMessage = req.body
       console.log('Received message data:', newMessage) // Debug log
+      console.log('Message keys:', Object.keys(newMessage)) // Debug log
+      console.log('Name conflicts check:', newMessage.name) // Debug log
 
       // Get existing messages
       let existingMessages = []
@@ -62,11 +64,13 @@ export default async function handler(req, res) {
         console.log('No existing messages found, starting fresh')
       }
 
-      // Add new message with ID and timestamp
+      // Add new message with unique ID and timestamp
+      const uniqueId = Date.now() + Math.random().toString(36).substr(2, 9)
       const messageWithId = {
         ...newMessage,
-        id: Date.now(),
-        timestamp: new Date().toISOString()
+        id: uniqueId,
+        timestamp: new Date().toISOString(),
+        messageIndex: existingMessages.length + 1 // Sequential number for ordering
       }
 
       existingMessages.push(messageWithId)

@@ -1,6 +1,17 @@
 // Simple service for Vercel Blob storage
 const API_BASE = "/api"; // Always use relative URLs so it works on any domain
 
+// Helper function to sanitize text for mobile compatibility
+const sanitizeText = (text) => {
+    if (!text) return text;
+    
+    // Remove any zero-width characters that mobile keyboards might add
+    return text
+        .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width spaces
+        .replace(/[\u202A-\u202E]/g, '') // Text direction marks
+        .normalize('NFC'); // Normalize Unicode
+};
+
 /**
  * Save a message using Vercel API
  * @param {Object} message - The message object
@@ -8,14 +19,21 @@ const API_BASE = "/api"; // Always use relative URLs so it works on any domain
  */
 export const saveMessage = async (message) => {
     try {
-        console.log("Attempting to save message:", message); // Debug log
+        // Sanitize message text for mobile compatibility
+        const sanitizedMessage = {
+            ...message,
+            message: sanitizeText(message.message),
+            name: sanitizeText(message.name)
+        };
+        
+        // Minimal logging for debugging
         
         const response = await fetch(`${API_BASE}/messages`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json; charset=utf-8",
             },
-            body: JSON.stringify(message),
+            body: JSON.stringify(sanitizedMessage),
         });
 
         if (!response.ok) {
