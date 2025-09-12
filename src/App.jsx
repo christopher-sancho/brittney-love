@@ -141,7 +141,7 @@ function App() {
         
         addChatMessage(currentMessage, true, 0)
         addChatMessage("Thank you so much! ❤️ Your message has been saved for Brittney's birthday! 🎉", false, 1000)
-        addChatMessage("Would you like to share another memory or message? 😊", false, 2500)
+        addChatMessage("Want to add another sweet message? Share a favorite memory, inside joke, or something that makes you smile about Brittney! 💕", false, 2500)
         
         // Reset form
         setCurrentMessage('')
@@ -166,10 +166,9 @@ function App() {
 
   const handleAnotherMemory = (wantsAnother) => {
     if (wantsAnother) {
-      // Clear chat messages and go directly to message input to avoid confusion
-      setChatMessages([])
-      addChatMessage("What else would you like to share about Brittney? 🥰", false, 500)
-      setTimeout(() => setStep('collect-message'), 1000)
+      addChatMessage("Yes, I'd love to share another! 💕", true, 0)
+      addChatMessage("Wonderful! What else would you like to share about Brittney? 🥰", false, 1000)
+      setTimeout(() => setStep('collect-message'), 2000)
     } else {
       addChatMessage("No, that's all for now 😊", true, 0)
       addChatMessage("Perfect! Would you like to share a favorite picture of Brittney? 📸✨", false, 1000)
@@ -427,13 +426,13 @@ function App() {
                 className="response-btn yes"
                 onClick={() => handleAnotherMemory(true)}
               >
-                📝 Add Another Message
+                Yes, I'd love to share another! 💕
               </button>
               <button 
                 className="response-btn no"
                 onClick={() => handleAnotherMemory(false)}
               >
-                📸 Share a Picture Instead
+                No, that's all for now 😊
               </button>
             </div>
           )}
