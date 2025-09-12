@@ -166,9 +166,10 @@ function App() {
 
   const handleAnotherMemory = (wantsAnother) => {
     if (wantsAnother) {
-      addChatMessage("Yes, I'd love to share another! 💕", true, 0)
-      addChatMessage("Wonderful! What else would you like to share about Brittney? 🥰", false, 1000)
-      setTimeout(() => setStep('collect-message'), 2000)
+      // Clear chat messages and go directly to message input to avoid confusion
+      setChatMessages([])
+      addChatMessage("What else would you like to share about Brittney? 🥰", false, 500)
+      setTimeout(() => setStep('collect-message'), 1000)
     } else {
       addChatMessage("No, that's all for now 😊", true, 0)
       addChatMessage("Perfect! Would you like to share a favorite picture of Brittney? 📸✨", false, 1000)
@@ -426,13 +427,13 @@ function App() {
                 className="response-btn yes"
                 onClick={() => handleAnotherMemory(true)}
               >
-                Yes, I'd love to share another! 💕
+                📝 Add Another Message
               </button>
               <button 
                 className="response-btn no"
                 onClick={() => handleAnotherMemory(false)}
               >
-                No, that's all for now 😊
+                📸 Share a Picture Instead
               </button>
             </div>
           )}
