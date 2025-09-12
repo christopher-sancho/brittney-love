@@ -1,5 +1,8 @@
 import { put } from '@vercel/blob'
 
+// Vercel Blob configuration
+const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN
+
 export default async function handler(req, res) {
   // Enable CORS for frontend requests
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -32,7 +35,8 @@ export default async function handler(req, res) {
     // Upload to Vercel Blob
     const blob = await put(uniqueFileName, buffer, {
       access: 'public',
-      contentType: imageData.match(/^data:([^;]+);/)?.[1] || 'image/jpeg'
+      contentType: imageData.match(/^data:([^;]+);/)?.[1] || 'image/jpeg',
+      token: BLOB_READ_WRITE_TOKEN
     })
 
     return res.status(200).json({ 

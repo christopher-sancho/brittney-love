@@ -1,8 +1,10 @@
 import { put, list } from '@vercel/blob'
 
-// Simple in-memory storage for messages (in production, you'd use a database)
 // For this birthday app, we'll store messages as JSON in Vercel Blob
 const MESSAGES_BLOB_NAME = 'birthday-messages.json'
+
+// Vercel Blob configuration - using your store
+const BLOB_READ_WRITE_TOKEN = process.env.BLOB_READ_WRITE_TOKEN
 
 export default async function handler(req, res) {
   // Enable CORS for frontend requests
@@ -19,7 +21,10 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // Get all messages
       try {
-        const { blobs } = await list({ prefix: MESSAGES_BLOB_NAME })
+        const { blobs } = await list({ 
+          prefix: MESSAGES_BLOB_NAME,
+          token: BLOB_READ_WRITE_TOKEN 
+        })
         
         if (blobs.length === 0) {
           return res.status(200).json([])
@@ -43,7 +48,10 @@ export default async function handler(req, res) {
       // Get existing messages
       let existingMessages = []
       try {
-        const { blobs } = await list({ prefix: MESSAGES_BLOB_NAME })
+        const { blobs } = await list({ 
+          prefix: MESSAGES_BLOB_NAME,
+          token: BLOB_READ_WRITE_TOKEN 
+        })
         if (blobs.length > 0) {
           const response = await fetch(blobs[0].url)
           existingMessages = await response.json() || []
@@ -64,7 +72,8 @@ export default async function handler(req, res) {
       // Save updated messages back to Vercel Blob
       const blob = await put(MESSAGES_BLOB_NAME, JSON.stringify(existingMessages), {
         access: 'public',
-        contentType: 'application/json'
+        contentType: 'application/json',
+        token: BLOB_READ_WRITE_TOKEN
       })
 
       return res.status(200).json({ 
