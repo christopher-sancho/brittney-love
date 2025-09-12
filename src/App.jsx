@@ -113,8 +113,8 @@ function App() {
     if (userName.trim()) {
       addChatMessage(userName, true, 0)
       addChatMessage(`Nice to meet you, ${userName}! 😊`, false, 1000)
-      addChatMessage("Please share a loving message, favorite memory, or something special about Brittney! 💕", false, 2500)
-      setTimeout(() => setStep('collect-message'), 3500)
+      addChatMessage("What would you like to share for Brittney's birthday? 🎉", false, 2500)
+      setTimeout(() => setStep('ask-more-content'), 3500)
     }
   }
 
@@ -185,8 +185,8 @@ function App() {
 
   const handleMoreContent = (choice) => {
     if (choice === 'photo') {
-      addChatMessage("📸 Upload another photo", true, 0)
-      addChatMessage("Great! Please select another picture of Brittney 📷💕", false, 1000)
+      addChatMessage("📸 Share a photo", true, 0)
+      addChatMessage("Great! Please select a picture of Brittney 📷💕", false, 1000)
       setTimeout(() => setStep('ask-picture'), 2000)
     } else if (choice === 'message') {
       addChatMessage("📝 Write a message", true, 0)
@@ -466,7 +466,7 @@ function App() {
                 className="response-btn yes"
                 onClick={() => handleMoreContent('photo')}
               >
-                📸 Upload Another Photo
+                📸 Share a Photo
               </button>
               <button 
                 className="response-btn"
