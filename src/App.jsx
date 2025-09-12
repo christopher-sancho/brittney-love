@@ -2,6 +2,43 @@ import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { saveMessage, getAllMessages, saveMessageWithImage } from './vercelService'
 
+// Helper function to compress images
+const compressImage = (file, quality = 0.6) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 800px width/height)
+      const maxSize = 800
+      let { width, height } = img
+      
+      if (width > height) {
+        if (width > maxSize) {
+          height = (height * maxSize) / width
+          width = maxSize
+        }
+      } else {
+        if (height > maxSize) {
+          width = (width * maxSize) / height
+          height = maxSize
+        }
+      }
+      
+      canvas.width = width
+      canvas.height = height
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', quality)
+      resolve(compressedBase64)
+    }
+    
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 function App() {
   const [step, setStep] = useState('welcome') // welcome, name-check, collect-message, ask-another, ask-picture, view-messages
   const [userName, setUserName] = useState('')
@@ -163,11 +200,16 @@ function App() {
       try {
         addChatMessage("Uploading your beautiful picture... 📸✨", false, 500)
         
-        // Convert file to base64
+        // Convert file to base64 and compress if needed
         const reader = new FileReader()
         reader.onload = async (event) => {
           try {
-            const base64Data = event.target.result
+            let base64Data = event.target.result
+            
+            // Compress image if it's too large (over 2MB base64 = ~1.5MB actual)
+            if (base64Data.length > 2000000) {
+              base64Data = await compressImage(file, 0.6) // Compress to 60% quality
+            }
             
             // Save the image with a message to Vercel
             const imageMessage = {
