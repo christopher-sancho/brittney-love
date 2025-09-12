@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { fetch } from 'undici';
 
 const accurateMessages = JSON.parse(fs.readFileSync('./final-messages-3.json', 'utf8'));
 
