@@ -176,10 +176,14 @@ function App() {
               timestamp: new Date().toISOString()
             }
             
+            console.log('Saving image message:', imageMessage); // Debug
+            console.log('Base64 data length:', base64Data?.length); // Debug
+            
             await saveMessageWithImage(imageMessage, base64Data)
             
             // Refresh messages from Vercel to get the new image
             const updatedMessages = await getAllMessages()
+            console.log('Updated messages after image upload:', updatedMessages); // Debug
             setMessages(updatedMessages)
             
             addChatMessage("Perfect! Your picture has been added! 📸✨", false, 2000)
@@ -272,20 +276,24 @@ function App() {
               </div>
             ) : (
               <div className="messages-list">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="birthday-message">
-                    <div className="message-author">From: {msg.name} 💕</div>
-                    <div className="message-content">{msg.message}</div>
-                    {msg.image && (
-                      <div className="message-image">
-                        <img src={msg.image} alt="Shared memory" />
+                {messages.map((msg) => {
+                  console.log('Message data:', msg); // Debug log
+                  return (
+                    <div key={msg.id} className="birthday-message">
+                      <div className="message-author">From: {msg.name} 💕</div>
+                      <div className="message-content">{msg.message}</div>
+                      {msg.image && (
+                        <div className="message-image">
+                          <img src={msg.image} alt="Shared memory" />
+                        </div>
+                      )}
+                      {msg.image && <div style={{fontSize: '12px', color: '#666'}}>📸 Image attached</div>}
+                      <div className="message-time">
+                        {new Date(msg.timestamp).toLocaleDateString()}
                       </div>
-                    )}
-                    <div className="message-time">
-                      {new Date(msg.timestamp).toLocaleDateString()}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
             <button 
