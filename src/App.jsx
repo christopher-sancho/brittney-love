@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
+import { saveMessage, getAllMessages, saveMessageWithImage } from './vercelService'
 
 function App() {
   const [step, setStep] = useState('welcome') // welcome, name-check, collect-message, ask-another, ask-picture, view-messages
@@ -11,12 +12,23 @@ function App() {
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  // Load messages from localStorage on component mount
+  // Load messages from Vercel on component mount
   useEffect(() => {
-    const savedMessages = localStorage.getItem('brittney-birthday-messages')
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages))
+    const loadMessages = async () => {
+      try {
+        const vercelMessages = await getAllMessages()
+        setMessages(vercelMessages)
+      } catch (error) {
+        console.error('Failed to load messages from Vercel:', error)
+        // Fallback to localStorage if Vercel fails
+        const savedMessages = localStorage.getItem('brittney-birthday-messages')
+        if (savedMessages) {
+          setMessages(JSON.parse(savedMessages))
+        }
+      }
     }
+    
+    loadMessages()
   }, [])
 
   // Auto-scroll to bottom when new chat messages are added
@@ -69,29 +81,49 @@ function App() {
     }
   }
 
-  const handleMessageSubmit = (e) => {
+  const handleMessageSubmit = async (e) => {
     e.preventDefault()
     if (currentMessage.trim()) {
       const newMessage = {
-        id: Date.now(),
         name: userName,
         message: currentMessage,
-        image: selectedImage,
         timestamp: new Date().toISOString()
       }
       
-      const updatedMessages = [...messages, newMessage]
-      setMessages(updatedMessages)
-      localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
-      
-      addChatMessage(currentMessage, true, 0)
-      addChatMessage("Thank you so much! ❤️ Your message has been saved for Brittney's birthday! 🎉", false, 1000)
-      addChatMessage("Would you like to share another memory or message? 😊", false, 2500)
-      
-      // Reset form
-      setCurrentMessage('')
-      setSelectedImage(null)
-      setTimeout(() => setStep('ask-another'), 3500)
+      try {
+        // Save to Vercel
+        const result = await saveMessage(newMessage)
+        
+        // Add to local state for immediate UI update
+        const savedMessage = result.message
+        const updatedMessages = [...messages, savedMessage]
+        setMessages(updatedMessages)
+        
+        // Keep localStorage as backup
+        localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
+        
+        addChatMessage(currentMessage, true, 0)
+        addChatMessage("Thank you so much! ❤️ Your message has been saved for Brittney's birthday! 🎉", false, 1000)
+        addChatMessage("Would you like to share another memory or message? 😊", false, 2500)
+        
+        // Reset form
+        setCurrentMessage('')
+        setSelectedImage(null)
+        setTimeout(() => setStep('ask-another'), 3500)
+        
+      } catch (error) {
+        console.error('Failed to save message:', error)
+        addChatMessage(currentMessage, true, 0)
+        addChatMessage("Oops! There was an issue saving your message. But don't worry, it's saved locally! 💕", false, 1000)
+        
+        // Fallback to localStorage only
+        const messageWithId = { ...newMessage, id: Date.now() }
+        const updatedMessages = [...messages, messageWithId]
+        setMessages(updatedMessages)
+        localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
+        
+        setTimeout(() => setStep('ask-another'), 2500)
+      }
     }
   }
 
@@ -125,37 +157,71 @@ function App() {
     }
   }
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
     const file = e.target.files[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const imageData = event.target.result
-        setSelectedImage(imageData)
+      try {
+        addChatMessage("Uploading your beautiful picture... 📸✨", false, 500)
         
-        // Save the image with a message
-        const imageMessage = {
-          id: Date.now(),
-          name: userName,
-          message: "Shared a favorite picture! 📸💕",
-          image: imageData,
-          timestamp: new Date().toISOString()
+        // Convert file to base64
+        const reader = new FileReader()
+        reader.onload = async (event) => {
+          try {
+            const base64Data = event.target.result
+            
+            // Save the image with a message to Vercel
+            const imageMessage = {
+              name: userName,
+              message: "Shared a favorite picture! 📸💕",
+              timestamp: new Date().toISOString()
+            }
+            
+            await saveMessageWithImage(imageMessage, base64Data)
+            
+            // Refresh messages from Vercel to get the new image
+            const updatedMessages = await getAllMessages()
+            setMessages(updatedMessages)
+            
+            addChatMessage("Perfect! Your picture has been added! 📸✨", false, 2000)
+            addChatMessage("Thank you for sharing such a beautiful memory! 💕", false, 3500)
+            addChatMessage("Brittney is going to love this! 🥰", false, 5000)
+            
+            setTimeout(() => {
+              setStep('welcome')
+              setUserName('')
+            }, 6500)
+            
+          } catch (error) {
+            console.error('Failed to upload image to Vercel:', error)
+            
+            // Fallback to local storage with base64
+            const imageMessage = {
+              id: Date.now(),
+              name: userName,
+              message: "Shared a favorite picture! 📸💕",
+              image: base64Data,
+              timestamp: new Date().toISOString()
+            }
+            
+            const updatedMessages = [...messages, imageMessage]
+            setMessages(updatedMessages)
+            localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
+            
+            addChatMessage("Picture saved locally! 📸 (Note: Upload to server failed)", false, 1000)
+            addChatMessage("Thank you for sharing! 💕", false, 2500)
+            
+            setTimeout(() => {
+              setStep('welcome')
+              setUserName('')
+            }, 4000)
+          }
         }
+        reader.readAsDataURL(file)
         
-        const updatedMessages = [...messages, imageMessage]
-        setMessages(updatedMessages)
-        localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
-        
-        addChatMessage("Perfect! Your picture has been added! 📸✨", false, 1000)
-        addChatMessage("Thank you for sharing such a beautiful memory! 💕", false, 2500)
-        addChatMessage("Brittney is going to love this! 🥰", false, 4000)
-        
-        setTimeout(() => {
-          setStep('welcome')
-          setUserName('')
-        }, 5500)
+      } catch (error) {
+        console.error('Failed to process image:', error)
+        addChatMessage("Sorry, there was an issue with the image. Please try again! 😊", false, 1000)
       }
-      reader.readAsDataURL(file)
     }
   }
 
