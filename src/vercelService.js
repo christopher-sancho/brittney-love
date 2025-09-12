@@ -8,16 +8,20 @@ const API_BASE = "/api"; // Always use relative URLs so it works on any domain
  */
 export const saveMessage = async (message) => {
     try {
+        console.log("Attempting to save message:", message); // Debug log
+        
         const response = await fetch(`${API_BASE}/messages`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
             },
             body: JSON.stringify(message),
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error("Save failed:", errorText); // Debug log
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
 
         const result = await response.json();

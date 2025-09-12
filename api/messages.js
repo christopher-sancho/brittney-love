@@ -12,6 +12,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   res.setHeader('Access-Control-Max-Age', '86400')
+  res.setHeader('Content-Type', 'application/json; charset=utf-8') // Ensure UTF-8 encoding
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       // Add new message
       const newMessage = req.body
+      console.log('Received message data:', newMessage) // Debug log
 
       // Get existing messages
       let existingMessages = []
@@ -70,9 +72,13 @@ export default async function handler(req, res) {
       existingMessages.push(messageWithId)
 
       // Save updated messages back to Vercel Blob
-      const blob = await put(MESSAGES_BLOB_NAME, JSON.stringify(existingMessages), {
+      // Ensure proper emoji/unicode handling
+      const jsonString = JSON.stringify(existingMessages, null, 2)
+      console.log('Saving JSON data:', jsonString.length, 'characters') // Debug log
+      
+      const blob = await put(MESSAGES_BLOB_NAME, jsonString, {
         access: 'public',
-        contentType: 'application/json',
+        contentType: 'application/json; charset=utf-8',
         token: BLOB_READ_WRITE_TOKEN,
         allowOverwrite: true  // Allow updating the existing messages file
       })
