@@ -1,125 +1,80 @@
-// Simple service for Vercel Blob storage
-const API_BASE = "/api"; // Always use relative URLs so it works on any domain
+const API_BASE = '/api';
 
-// Helper function to sanitize text for mobile compatibility
 const sanitizeText = (text) => {
     if (!text) return text;
-    
-    // Remove any zero-width characters that mobile keyboards might add
-    return text
-        .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width spaces
-        .replace(/[\u202A-\u202E]/g, '') // Text direction marks
-        .normalize('NFC'); // Normalize Unicode
+    return text.replace(/[\u200B-\u200D\uFEFF]/g, '');
 };
 
-/**
- * Save a message using Vercel API
- * @param {Object} message - The message object
- * @returns {Promise} - Promise that resolves when message is saved
- */
-export const saveMessage = async (message) => {
-    try {
-        // Sanitize message text for mobile compatibility
-        const sanitizedMessage = {
-            ...message,
-            message: sanitizeText(message.message),
-            name: sanitizeText(message.name)
-        };
-        
-        // Minimal logging for debugging
-        
-        const response = await fetch(`${API_BASE}/messages`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json; charset=utf-8",
-            },
-            body: JSON.stringify(sanitizedMessage),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Save failed:", errorText); // Debug log
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log("Message saved successfully:", result);
-        return result;
-    } catch (error) {
-        console.error("Error saving message:", error);
-        throw error;
-    }
-};
-
-/**
- * Get all messages from Vercel API
- * @returns {Promise<Array>} - Promise that resolves to array of messages
- */
-export const getAllMessages = async () => {
+export const getMessages = async () => {
     try {
         const response = await fetch(`${API_BASE}/messages`);
-
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const messages = await response.json();
-        return messages || [];
+        return await response.json();
     } catch (error) {
-        console.error("Error fetching messages:", error);
         throw error;
     }
 };
 
-/**
- * Upload an image to Vercel Blob
- * @param {string} base64Data - Base64 encoded image data
- * @param {string} fileName - Optional filename
- * @returns {Promise<string>} - Promise that resolves to the image URL
- */
-export const uploadImage = async (base64Data, fileName = null) => {
+export const saveMessage = async (messageData) => {
     try {
-        const response = await fetch(`${API_BASE}/upload-image`, {
-            method: "POST",
+        const sanitizedMessage = {
+            ...messageData,
+            name: sanitizeText(messageData.name),
+            message: sanitizeText(messageData.message)
+        };
+
+        const response = await fetch(`${API_BASE}/messages`, {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json; charset=utf-8'
             },
-            body: JSON.stringify({
-                imageData: base64Data,
-                fileName: fileName,
-            }),
+            body: JSON.stringify(sanitizedMessage)
         });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result = await response.json();
-        return result.imageUrl;
+        return await response.json();
     } catch (error) {
-        console.error("Error uploading image:", error);
         throw error;
     }
 };
 
-/**
- * Save a message with an image
- * @param {Object} messageData - The message data
- * @param {string} base64ImageData - Base64 encoded image data
- * @returns {Promise} - Promise that resolves when both are saved
- */
+export const uploadImage = async (base64Data) => {
+    try {
+        const response = await fetch(`${API_BASE}/upload-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify({ image: base64Data })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const { url } = await response.json();
+        return url;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const saveMessageWithImage = async (messageData, base64ImageData) => {
     try {
-        // Save the message with base64 image directly (simpler approach)
+        const imageUrl = await uploadImage(base64ImageData);
         const messageWithImage = {
             ...messageData,
-            image: base64ImageData,
+            imageUrl,
             hasImage: true,
         };
 
         return await saveMessage(messageWithImage);
     } catch (error) {
-        console.error("Error saving message with image:", error);
         throw error;
     }
 };

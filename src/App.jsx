@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { saveMessage, getAllMessages, saveMessageWithImage } from './vercelService'
+import { saveMessage, getMessages, saveMessageWithImage } from './vercelService'
 
 // Helper function to compress images
 const compressImage = (file, quality = 0.6) => {
@@ -53,7 +53,7 @@ function App() {
   useEffect(() => {
     const loadMessages = async () => {
       try {
-        const vercelMessages = await getAllMessages()
+        const vercelMessages = await getMessages()
         setMessages(vercelMessages)
       } catch (error) {
         console.error('Failed to load messages from Vercel:', error)
@@ -251,7 +251,7 @@ function App() {
             await saveMessageWithImage(imageMessage, base64Data)
             
             // Refresh messages from Vercel to get the new image
-            const updatedMessages = await getAllMessages()
+            const updatedMessages = await getMessages()
             setMessages(updatedMessages)
             
             addChatMessage("Perfect! Your picture has been added! 📸✨", false, 2000)

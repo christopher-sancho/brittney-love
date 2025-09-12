@@ -1,32 +1,59 @@
 import fs from 'fs';
 
-// Read all messages and prepare them for direct upload
-const allMessages = JSON.parse(fs.readFileSync('batch-messages.json', 'utf8'));
+async function main() {
+  // Get the file path from command line argument or use default
+  const filePath = process.argv[2] || './final-messages.json';
+  
+  if (!fs.existsSync(filePath)) {
+    console.error(`❌ File not found: ${filePath}`);
+    process.exit(1);
+  }
 
-console.log(`Processing ${allMessages.length} messages for direct upload...`);
+  const fetch = (await import('node-fetch')).default;
+  
+  try {
+    // Read the messages to restore
+    const messages = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    console.log(`📖 Read ${messages.length} messages from ${filePath}`);
 
-// Transform messages to the format expected by the backend
-const processedMessages = allMessages.map((msg, index) => ({
-  name: msg.name,
-  message: msg.message,
-  id: `restored_${Date.now()}_${index}`,
-  timestamp: msg.originalTimestamp || new Date().toISOString(),
-  messageIndex: index + 1,
-  // Handle images if present
-  ...(msg.image && {
-    image: msg.image,
-    hasImage: true
-  })
-}));
+    // Create a backup of current production state
+    console.log('\n📡 Fetching current production state...');
+    const prodResponse = await fetch('https://brittney-love.vercel.app/api/messages');
+    const prodMessages = await prodResponse.json();
+    
+    // Save production backup
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupsDir = './backups';
+    if (!fs.existsSync(backupsDir)) {
+      fs.mkdirSync(backupsDir);
+    }
+    const backupPath = `${backupsDir}/prod-backup-${timestamp}.json`;
+    fs.writeFileSync(backupPath, JSON.stringify(prodMessages, null, 2));
+    console.log(`💾 Saved production backup to ${backupPath}`);
 
-// Write the final JSON that should be uploaded to replace the current storage
-fs.writeFileSync('final-messages.json', JSON.stringify(processedMessages, null, 2));
+    // Upload the messages
+    console.log('\n🚀 Uploading messages...');
+    const response = await fetch('https://brittney-love.vercel.app/api/direct-restore', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages }) // Wrap messages in an object
+    });
 
-console.log(`✅ Created final-messages.json with ${processedMessages.length} messages`);
-console.log('📝 This file needs to be manually uploaded to replace the current storage');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorData)}`);
+    }
 
-// Show a summary
-console.log('\n📊 Message summary:');
-processedMessages.forEach((msg, i) => {
-  console.log(`${i + 1}. ${msg.name}: ${msg.message.substring(0, 40)}... ${msg.hasImage ? '[📸]' : ''}`);
-});
+    const result = await response.json();
+    console.log('\n✅ Successfully restored messages!');
+    console.log(`📊 Stats: ${result.restoredCount} messages uploaded`);
+    
+  } catch (error) {
+    console.error('\n❌ Error:', error.message);
+    process.exit(1);
+  }
+}
+
+main();
