@@ -345,9 +345,9 @@ function App() {
                   <div key={msg.id} className="birthday-message">
                     <div className="message-author">From: {msg.name} 💕</div>
                     <div className="message-content">{msg.message}</div>
-                    {msg.image && (
+                    {(msg.image || msg.imageUrl) && (
                       <div className="message-image">
-                        <img src={msg.image} alt="Shared memory" />
+                        <img src={msg.imageUrl || msg.image} alt="Shared memory" />
                       </div>
                     )}
                     <div className="message-time">

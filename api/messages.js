@@ -44,10 +44,8 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       // Add new message
-      const newMessage = req.body
-      console.log('Received message data:', newMessage) // Debug log
-      console.log('Message keys:', Object.keys(newMessage)) // Debug log
-      console.log('Name conflicts check:', newMessage.name) // Debug log
+      const { name, message, image } = req.body
+      console.log('Received message - name:', name, 'message length:', message?.length, 'has image:', !!image)
 
       // Get existing messages
       let existingMessages = []
@@ -64,27 +62,54 @@ export default async function handler(req, res) {
         console.log('No existing messages found, starting fresh')
       }
 
-      // Add new message with unique ID and timestamp
+      // Create new message with unique ID
       const uniqueId = Date.now() + Math.random().toString(36).substr(2, 9)
       const messageWithId = {
-        ...newMessage,
+        name,
+        message,
         id: uniqueId,
         timestamp: new Date().toISOString(),
-        messageIndex: existingMessages.length + 1 // Sequential number for ordering
+        messageIndex: existingMessages.length + 1
+      }
+
+      // Handle image separately to avoid JSON size limits
+      if (image) {
+        try {
+          // Store image as separate blob file
+          const imageFileName = `image-${uniqueId}.jpg`
+          
+          // Convert base64 to buffer for proper storage
+          const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '')
+          const imageBuffer = Buffer.from(base64Data, 'base64')
+          
+          const imageBlob = await put(imageFileName, imageBuffer, {
+            access: 'public',
+            contentType: 'image/jpeg',
+            token: BLOB_READ_WRITE_TOKEN,
+            allowOverwrite: true
+          })
+          
+          // Store only the URL in the message (much smaller)
+          messageWithId.imageUrl = imageBlob.url
+          messageWithId.hasImage = true
+          console.log('Stored image separately at:', imageBlob.url)
+        } catch (imageError) {
+          console.error('Failed to store image:', imageError)
+          // Continue without image rather than failing completely
+        }
       }
 
       existingMessages.push(messageWithId)
 
-      // Save updated messages back to Vercel Blob
-      // Ensure proper emoji/unicode handling
+      // Save lightweight JSON (no base64 images, just URLs)
       const jsonString = JSON.stringify(existingMessages, null, 2)
-      console.log('Saving JSON data:', jsonString.length, 'characters') // Debug log
+      console.log('Lightweight JSON size:', jsonString.length, 'characters')
       
       const blob = await put(MESSAGES_BLOB_NAME, jsonString, {
         access: 'public',
         contentType: 'application/json; charset=utf-8',
         token: BLOB_READ_WRITE_TOKEN,
-        allowOverwrite: true  // Allow updating the existing messages file
+        allowOverwrite: true
       })
 
       return res.status(200).json({ 
