@@ -47,7 +47,11 @@ async function getCurrentMessageFile() {
 async function getAllMessages() {
   try {
     const { blobs } = await list();
-    const messageFiles = blobs.filter(blob => blob.pathname.startsWith(MESSAGE_FILE_PREFIX));
+    // Include both the old birthday-messages.json and new chunked files
+    const messageFiles = blobs.filter(blob => 
+      blob.pathname.startsWith(MESSAGE_FILE_PREFIX) || 
+      blob.pathname === 'birthday-messages.json'
+    );
 
     const allMessages = await Promise.all(
       messageFiles.map(async file => {
