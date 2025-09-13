@@ -10,8 +10,8 @@ const compressImage = (file, quality = 0.6) => {
     const img = new Image()
     
     img.onload = () => {
-      // Calculate new dimensions (max 800px width/height)
-      const maxSize = 800
+      // More aggressive sizing for faster loading (max 600px)
+      const maxSize = 600
       let { width, height } = img
       
       if (width > height) {
@@ -28,6 +28,10 @@ const compressImage = (file, quality = 0.6) => {
       
       canvas.width = width
       canvas.height = height
+      
+      // Use better image smoothing for quality
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       
       // Draw and compress
       ctx.drawImage(img, 0, 0, width, height)
@@ -304,7 +308,25 @@ function App() {
                     <div className="message-content">{msg.message}</div>
                     {(msg.image || msg.imageUrl) && (
                       <div className="message-image">
-                        <img src={msg.imageUrl || msg.image} alt="Shared memory" />
+                        <img 
+                          src={msg.imageUrl || msg.image} 
+                          alt="Shared memory"
+                          loading="lazy"
+                          style={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            borderRadius: '12px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          }}
+                          onLoad={(e) => {
+                            e.target.style.opacity = '1';
+                            e.target.style.transition = 'opacity 0.3s ease-in-out';
+                          }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            console.log('Failed to load image:', msg.imageUrl || msg.image);
+                          }}
+                        />
                       </div>
                     )}
                     <div className="message-time">
