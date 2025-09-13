@@ -302,7 +302,38 @@ function App() {
               </div>
             ) : (
               <div className="messages-list">
-                {messages.map((msg) => (
+                {(() => {
+                  // Deduplicate messages with same image URL, preferring named people over "Family"
+                  const seenImageUrls = new Set();
+                  const deduplicatedMessages = [];
+                  
+                  // First pass: add messages from named people (not "Family")
+                  messages.forEach(msg => {
+                    if (msg.imageUrl || msg.image) {
+                      const imageUrl = msg.imageUrl || msg.image;
+                      if (!seenImageUrls.has(imageUrl) && msg.name !== 'Family') {
+                        seenImageUrls.add(imageUrl);
+                        deduplicatedMessages.push(msg);
+                      }
+                    } else {
+                      // Always include messages without images
+                      deduplicatedMessages.push(msg);
+                    }
+                  });
+                  
+                  // Second pass: add "Family" messages only if image URL not already seen
+                  messages.forEach(msg => {
+                    if ((msg.imageUrl || msg.image) && msg.name === 'Family') {
+                      const imageUrl = msg.imageUrl || msg.image;
+                      if (!seenImageUrls.has(imageUrl)) {
+                        seenImageUrls.add(imageUrl);
+                        deduplicatedMessages.push(msg);
+                      }
+                    }
+                  });
+                  
+                  return deduplicatedMessages;
+                })().map((msg) => (
                   <div key={msg.id} className="birthday-message">
                     <div className="message-author">From: {msg.name} 💕</div>
                     <div className="message-content">{msg.message}</div>
