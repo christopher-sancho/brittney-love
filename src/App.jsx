@@ -40,7 +40,7 @@ const compressImage = (file, quality = 0.6) => {
 }
 
 function App() {
-  const [step, setStep] = useState('welcome') // welcome, name-check, collect-message, ask-another, ask-picture, ask-more-content, view-messages
+  const [step, setStep] = useState('welcome')
   const [userName, setUserName] = useState('')
   const [currentMessage, setCurrentMessage] = useState('')
   const [selectedImage, setSelectedImage] = useState(null)
@@ -56,8 +56,7 @@ function App() {
         const vercelMessages = await getMessages()
         setMessages(vercelMessages)
       } catch (error) {
-        console.error('Failed to load messages from Vercel:', error)
-        // Fallback to localStorage if Vercel fails
+        // Only use localStorage if server request fails
         const savedMessages = localStorage.getItem('brittney-birthday-messages')
         if (savedMessages) {
           setMessages(JSON.parse(savedMessages))
@@ -128,22 +127,13 @@ function App() {
       }
       
       try {
-        // Show debug info in chat for mobile debugging
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-        if (isMobile) {
-          addChatMessage(`Debug: Saving from "${newMessage.name}" - "${newMessage.message.substring(0, 20)}..." (${newMessage.message.length} chars)`, false, 500)
-        }
-        
         // Save to Vercel
         const result = await saveMessage(newMessage)
         
-        // Add to local state for immediate UI update
+        // Only update local state after successful save
         const savedMessage = result.message
-        const updatedMessages = [...messages, savedMessage]
+        const updatedMessages = await getMessages() // Get fresh messages from server
         setMessages(updatedMessages)
-        
-        // Keep localStorage as backup
-        localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
         
         addChatMessage(currentMessage, true, 0)
         addChatMessage("Thank you so much! ❤️ Your message has been saved for Brittney's birthday! 🎉", false, 1000)
@@ -155,18 +145,8 @@ function App() {
         setTimeout(() => setStep('ask-more-content'), 3500)
         
       } catch (error) {
-        console.error('Failed to save message:', error)
         addChatMessage(currentMessage, true, 0)
-        addChatMessage(`Debug: Error saving "${currentMessage.substring(0, 20)}..." - ${error.message}`, false, 1000)
-        addChatMessage("Your message is saved locally though! 💕", false, 3000)
-        
-        // Fallback to localStorage only
-        const messageWithId = { ...newMessage, id: Date.now() }
-        const updatedMessages = [...messages, messageWithId]
-        setMessages(updatedMessages)
-        localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
-        
-        setTimeout(() => setStep('ask-another'), 2500)
+        addChatMessage("Sorry, there was an issue saving your message. Please try again! 💕", false, 1000)
       }
     }
   }
@@ -207,7 +187,6 @@ function App() {
       addChatMessage("Yes, I'd love to share a picture! 📸", true, 0)
       addChatMessage("Amazing! Please select your favorite picture of Brittney below 💕", false, 1000)
       setTimeout(() => {
-        // Better mobile file input triggering
         if (fileInputRef.current) {
           fileInputRef.current.value = '' // Reset input
           fileInputRef.current.click()
@@ -236,9 +215,9 @@ function App() {
           try {
             let base64Data = event.target.result
             
-            // Compress image if it's too large (over 2MB base64 = ~1.5MB actual)
+            // Compress image if it's too large
             if (base64Data.length > 2000000) {
-              base64Data = await compressImage(file, 0.6) // Compress to 60% quality
+              base64Data = await compressImage(file, 0.6)
             }
             
             // Save the image with a message to Vercel
@@ -250,7 +229,7 @@ function App() {
             
             await saveMessageWithImage(imageMessage, base64Data)
             
-            // Refresh messages from Vercel to get the new image
+            // Refresh messages from server
             const updatedMessages = await getMessages()
             setMessages(updatedMessages)
             
@@ -261,34 +240,12 @@ function App() {
             setTimeout(() => setStep('ask-more-content'), 6000)
             
           } catch (error) {
-            console.error('Failed to upload image to Vercel:', error)
-            
-            // Fallback to local storage with base64
-            const imageMessage = {
-              id: Date.now(),
-              name: userName,
-              message: "Shared a favorite picture! 📸💕",
-              image: base64Data, // This variable is available in this scope
-              timestamp: new Date().toISOString()
-            }
-            
-            const updatedMessages = [...messages, imageMessage]
-            setMessages(updatedMessages)
-            localStorage.setItem('brittney-birthday-messages', JSON.stringify(updatedMessages))
-            
-            addChatMessage("Picture saved locally! 📸 (Note: Upload to server failed)", false, 1000)
-            addChatMessage("Thank you for sharing! 💕", false, 2500)
-            
-            setTimeout(() => {
-              setStep('welcome')
-              setUserName('')
-            }, 4000)
+            addChatMessage("Sorry, there was an issue uploading your picture. Please try again! 😊", false, 1000)
           }
         }
         reader.readAsDataURL(file)
         
       } catch (error) {
-        console.error('Failed to process image:', error)
         addChatMessage("Sorry, there was an issue with the image. Please try again! 😊", false, 1000)
       }
     }

@@ -3,6 +3,15 @@ import { put, list, del } from '@vercel/blob';
 const MAX_MESSAGES_PER_FILE = 10;
 const MESSAGE_FILE_PREFIX = 'birthday-messages-';
 
+const defaultHeaders = {
+  'Content-Type': 'application/json; charset=utf-8',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache'
+};
+
 async function getCurrentMessageFile() {
   try {
     const { blobs } = await list();
@@ -14,6 +23,12 @@ async function getCurrentMessageFile() {
       return `${MESSAGE_FILE_PREFIX}1.json`;
     }
 
+    // If this is the first file, allow it to grow larger
+    if (messageFiles[0].pathname === `${MESSAGE_FILE_PREFIX}1.json`) {
+      return messageFiles[0].pathname;
+    }
+
+    // For subsequent files, check if current file is full
     const latestFile = messageFiles[0];
     const response = await fetch(latestFile.url);
     const messages = await response.json();
@@ -54,29 +69,38 @@ export async function GET(request) {
     const messages = await getAllMessages();
     return new Response(JSON.stringify(messages), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
+      headers: defaultHeaders
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Internal server error' }), { 
       status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: defaultHeaders
     });
   }
 }
 
 export async function POST(request) {
   try {
-    const messageData = await request.json();
-    const currentFile = await getCurrentMessageFile();
+    const data = await request.json();
     
+    // Handle batch upload
+    if (data.messages && data.fileName) {
+      const { url } = await put(data.fileName, JSON.stringify(data.messages), {
+        access: 'public',
+        addRandomSuffix: false,
+        contentType: 'application/json; charset=utf-8',
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+        allowOverwrite: true
+      });
+
+      return new Response(JSON.stringify({ success: true, url }), {
+        status: 200,
+        headers: defaultHeaders
+      });
+    }
+    
+    // Handle single message
+    const currentFile = await getCurrentMessageFile();
     let messages = [];
     try {
       const { blobs } = await list();
@@ -91,9 +115,9 @@ export async function POST(request) {
 
     // Add id and timestamp to the message
     const newMessage = {
-      ...messageData,
-      id: Date.now() + Math.random(),
-      timestamp: new Date().toISOString()
+      ...data,
+      id: data.id || `${Date.now()}-${Math.random()}`,
+      timestamp: data.timestamp || new Date().toISOString()
     };
     messages.push(newMessage);
 
@@ -107,20 +131,12 @@ export async function POST(request) {
 
     return new Response(JSON.stringify({ success: true, message: newMessage }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
+      headers: defaultHeaders
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: defaultHeaders
     });
   }
 }
@@ -128,10 +144,6 @@ export async function POST(request) {
 export async function OPTIONS(request) {
   return new Response(null, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    headers: defaultHeaders
   });
 }

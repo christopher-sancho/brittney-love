@@ -1,5 +1,14 @@
 import { put } from '@vercel/blob';
 
+const defaultHeaders = {
+  'Content-Type': 'application/json; charset=utf-8',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache'
+};
+
 export async function POST(request) {
   try {
     const { image } = await request.json();
@@ -7,10 +16,7 @@ export async function POST(request) {
     if (!image) {
       return new Response(JSON.stringify({ error: 'No image data provided' }), {
         status: 400,
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Access-Control-Allow-Origin': '*'
-        }
+        headers: defaultHeaders
       });
     }
 
@@ -31,21 +37,13 @@ export async function POST(request) {
 
     return new Response(JSON.stringify({ url: blob.url }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      }
+      headers: defaultHeaders
     });
 
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Failed to upload image' }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers: defaultHeaders
     });
   }
 }
@@ -53,10 +51,6 @@ export async function POST(request) {
 export async function OPTIONS(request) {
   return new Response(null, {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    headers: defaultHeaders
   });
 }

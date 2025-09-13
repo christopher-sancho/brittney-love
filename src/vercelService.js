@@ -5,9 +5,18 @@ const sanitizeText = (text) => {
     return text.replace(/[\u200B-\u200D\uFEFF]/g, '');
 };
 
+const defaultHeaders = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache'
+};
+
 export const getMessages = async () => {
     try {
-        const response = await fetch(`${API_BASE}/messages`);
+        const response = await fetch(`${API_BASE}/messages`, {
+            headers: defaultHeaders,
+            cache: 'no-store'
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -27,10 +36,9 @@ export const saveMessage = async (messageData) => {
 
         const response = await fetch(`${API_BASE}/messages`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            },
-            body: JSON.stringify(sanitizedMessage)
+            headers: defaultHeaders,
+            body: JSON.stringify(sanitizedMessage),
+            cache: 'no-store'
         });
 
         if (!response.ok) {
@@ -47,10 +55,9 @@ export const uploadImage = async (base64Data) => {
     try {
         const response = await fetch(`${API_BASE}/upload-image`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            },
-            body: JSON.stringify({ image: base64Data })
+            headers: defaultHeaders,
+            body: JSON.stringify({ image: base64Data }),
+            cache: 'no-store'
         });
 
         if (!response.ok) {
