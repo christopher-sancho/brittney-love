@@ -12,6 +12,39 @@ const defaultHeaders = {
   'Pragma': 'no-cache'
 };
 
+// Function to deduplicate and clean messages
+function deduplicateMessages(messages) {
+  const seen = new Set();
+  const cleanMessages = [];
+  
+  messages.forEach(msg => {
+    // Remove messages that claim to have shared a picture but don't have image data
+    if (msg.message === "Shared a favorite picture! 📸💕") {
+      const hasImageData = msg.image || msg.imageUrl;
+      if (!hasImageData) {
+        return; // Skip this message - it's a broken image message
+      }
+    }
+    
+    // Create a unique key for deduplication
+    const key = JSON.stringify({
+      name: msg.name?.trim(),
+      message: msg.message?.trim(),
+      // Include image data for comparison (first 100 chars to avoid huge keys)
+      imagePreview: msg.image ? msg.image.substring(0, 100) : null,
+      imageUrl: msg.imageUrl,
+      hasImage: msg.hasImage
+    });
+    
+    if (!seen.has(key)) {
+      seen.add(key);
+      cleanMessages.push(msg);
+    }
+  });
+  
+  return cleanMessages;
+}
+
 async function getCurrentMessageFile() {
   try {
     const { blobs } = await list();
@@ -60,8 +93,10 @@ async function getAllMessages() {
       })
     );
 
-    return allMessages
-      .flat()
+    const flatMessages = allMessages.flat();
+    const cleanedMessages = deduplicateMessages(flatMessages);
+    
+    return cleanedMessages
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   } catch (error) {
     throw error;
